@@ -1,5 +1,5 @@
 
-export type Section = 'pre-login' | 'login' | 'register' | 'hub' | 'play' | 'profile' | 'info' | 'printable';
+export type Section = 'pre-login' | 'login' | 'register' | 'hub' | 'play' | 'profile' | 'info' | 'printable' | 'words';
 
 export interface User {
   id: string;
@@ -58,4 +58,31 @@ export interface ImageGenerationOptions {
 export interface VideoGenerationOptions {
   aspectRatio: '16:9' | '9:16';
   resolution: '720p' | '1080p';
+}
+
+// ====== New: First Words learning system ======
+
+export interface WordItem {
+  id: string;
+  word: string;
+  imageUrl: string;
+  audioInstruction: string;
+  celebrationPhrase: string;
+  isDynamic?: boolean;
+}
+
+export type ContentType = 'word' | 'syllable' | 'letter';
+export type MasteryLevel = 0 | 1 | 2 | 3;
+
+export interface ContentProgress {
+  content_id: string;
+  content_type: ContentType;
+  attempts: number;
+  correct_attempts: number;
+  incorrect_attempts: number;
+  mastery_level: MasteryLevel;
+  consecutive_correct: number;
+  completed: boolean;
+  last_seen_at: string | null;
+  next_review_at: string;
 }

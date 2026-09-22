@@ -94,6 +94,26 @@ const Hub: React.FC<Props> = ({ user, setSection, onSelectCard }) => {
       </header>
 
       <main className="flex-1 pt-24 sm:pt-28 pb-32 px-4 max-w-6xl mx-auto w-full">
+        {/* SECCIÓN: MIS PRIMERAS PALABRAS */}
+        <div className="mb-12 sm:mb-16">
+          <button
+            onClick={() => handleSectionChange('words')}
+            className="w-full bg-gradient-to-r from-pink-500 via-rose-500 to-orange-400 rounded-[2.5rem] p-5 sm:p-7 shadow-2xl border-4 border-white/40 flex items-center gap-4 sm:gap-6 transition-all hover:scale-[1.02] active:scale-95 group"
+          >
+            <div className="text-5xl sm:text-7xl floating-gumi select-none shrink-0">👾</div>
+            <div className="flex-1 text-left">
+              <h2 className="text-2xl sm:text-4xl font-magic text-white drop-shadow-lg uppercase tracking-tighter leading-tight">
+                Mis Primeras Palabras
+              </h2>
+              <p className="text-sm sm:text-base font-bold text-white/90 mt-1">
+                Aprende palabras completas antes de las letras
+              </p>
+            </div>
+            <div className="text-3xl sm:text-5xl text-white shrink-0 group-hover:translate-x-2 transition-transform">👉</div>
+          </button>
+        </div>
+
+        {/* SECCIÓN: CAMINO MÁGICO (letras y sílabas existentes) */}
         <div className="flex flex-col items-center mb-10 sm:mb-16 text-center">
             <h2 className="text-4xl sm:text-7xl font-magic text-white drop-shadow-[0_8px_20px_rgba(0,0,0,0.6)] mb-2 uppercase tracking-tighter">Camino Mágico</h2>
         </div>

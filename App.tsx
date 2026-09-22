@@ -11,6 +11,7 @@ import PrintableCards from './components/PrintableCards';
 import ChatBuddy from './components/ChatBuddy';
 import VoiceLive from './components/VoiceLive';
 import MediaGenerator from './components/MediaGenerator';
+import WordLearning from './components/WordLearning';
 import { MAGIC_PATH } from './services/mockData';
 import { supabase, isSupabaseReady } from './services/supabaseClient';
 
@@ -146,6 +147,14 @@ const App: React.FC = () => {
       case 'profile': return user ? <Profile user={user} onBack={() => setSection('hub')} onLogout={() => { setUser(null); localStorage.removeItem('magic_user'); setSection('pre-login'); }} onUpdate={(upd) => setUser({...user, ...upd})} /> : null;
       case 'info': return <Info onBack={() => setSection('hub')} />;
       case 'printable': return <PrintableCards onBack={() => setSection('hub')} />;
+      case 'words': return user ? <WordLearning user={user} onBack={() => setSection('hub')} onComplete={(scoreGain) => {
+        const updatedUser = { ...user, score: user.score + scoreGain };
+        setUser(updatedUser);
+        localStorage.setItem('magic_user', JSON.stringify(updatedUser));
+        if (isSupabaseReady() && user.id !== 'guest') {
+          supabase!.from('profiles').update({ score: updatedUser.score }).eq('id', user.id);
+        }
+      }} /> : null;
       case 'chat': return <div className="p-4 pt-20 max-w-2xl mx-auto"><button onClick={() => setSection('hub')} className="mb-4 text-white bg-indigo-600 px-6 py-2 rounded-full font-magic uppercase">Volver</button><ChatBuddy /></div>;
       case 'voice': return <div className="p-4 pt-20 max-w-2xl mx-auto"><button onClick={() => setSection('hub')} className="mb-4 text-white bg-indigo-600 px-6 py-2 rounded-full font-magic uppercase">Volver</button><VoiceLive /></div>;
       case 'generator': return <div className="p-4 pt-20 max-w-2xl mx-auto"><button onClick={() => setSection('hub')} className="mb-4 text-white bg-indigo-600 px-6 py-2 rounded-full font-magic uppercase">Volver</button><MediaGenerator /></div>;

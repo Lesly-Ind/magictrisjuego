@@ -14,7 +14,9 @@ interface Props {
 
 const GameBoard: React.FC<Props> = ({ user, card, onComplete, onBack }) => {
   const [gameState, setGameState] = useState<GameState['step']>('intro');
-  const [feedback, setFeedback] = useState<'success' | 'error' | null>(null);
+  const [feedback, setFeedback] = useState<'success' | null>(null);
+  const [wrongPick, setWrongPick] = useState<string | null>(null);
+  const [hintActive, setHintActive] = useState(false);
 
   // Generar distractores de letras/sílabas de forma más inteligente
   const letterChoices = useMemo(() => {
@@ -45,6 +47,8 @@ const GameBoard: React.FC<Props> = ({ user, card, onComplete, onBack }) => {
   const handleCorrectIdentify = () => {
     playSuccessSound();
     setFeedback('success');
+    setWrongPick(null);
+    setHintActive(false);
     setTimeout(() => {
       setFeedback(null);
       setGameState('findLetter');
@@ -54,16 +58,18 @@ const GameBoard: React.FC<Props> = ({ user, card, onComplete, onBack }) => {
   const handleCorrectFindLetter = () => {
     playSuccessSound();
     setFeedback('success');
+    setWrongPick(null);
+    setHintActive(false);
     setTimeout(() => {
       setFeedback(null);
       setGameState('success');
     }, 1200);
   };
 
-  const handleError = () => {
+  const handleGentleError = (pickedValue: string) => {
     playPopSound();
-    setFeedback('error');
-    setTimeout(() => setFeedback(null), 1200);
+    setWrongPick(pickedValue);
+    setHintActive(true);
   };
 
   const handleBack = () => {
@@ -114,8 +120,8 @@ const GameBoard: React.FC<Props> = ({ user, card, onComplete, onBack }) => {
     return <span className={`font-magic uppercase tracking-tight text-indigo-900 whitespace-nowrap ${wordSizeClass}`}>{word}</span>;
   };
 
-  const bubbleClass = "w-32 h-32 sm:w-44 md:w-56 sm:h-44 md:h-56 rounded-full bg-indigo-800/60 border-[6px] sm:border-[8px] border-white/40 shadow-2xl flex flex-col items-center justify-center transition-all transform hover:scale-105 active:scale-95 overflow-hidden p-3 sm:p-4";
-  const letterCardClass = "w-28 h-40 sm:w-36 md:w-48 sm:h-52 md:h-64 rounded-[2rem] sm:rounded-[2.5rem] bg-white border-[6px] sm:border-[10px] border-indigo-200 flex items-center justify-center shadow-2xl transition-all transform hover:scale-105 active:scale-95 text-center overflow-hidden p-2 sm:p-3";
+  const bubbleClass = "relative w-32 h-32 sm:w-44 md:w-56 sm:h-44 md:h-56 rounded-full bg-indigo-800/60 border-[6px] sm:border-[8px] border-white/40 shadow-2xl flex flex-col items-center justify-center transition-all transform hover:scale-105 active:scale-95 overflow-visible p-3 sm:p-4";
+  const letterCardClass = "relative w-28 h-40 sm:w-36 md:w-48 sm:h-52 md:h-64 rounded-[2rem] sm:rounded-[2.5rem] bg-white border-[6px] sm:border-[10px] border-indigo-200 flex items-center justify-center shadow-2xl transition-all transform hover:scale-105 active:scale-95 text-center overflow-visible p-2 sm:p-3";
 
   return (
     <div className="fixed inset-0 bg-indigo-950 z-[100] flex flex-col p-3 sm:p-6 overflow-y-auto">
@@ -177,16 +183,29 @@ const GameBoard: React.FC<Props> = ({ user, card, onComplete, onBack }) => {
             </div>
             
             <div className="flex-1 w-full flex flex-wrap items-center justify-center gap-4 sm:gap-10 px-2 sm:px-4">
-                {emojiChoices.map((emoji, idx) => (
-                  <button 
-                    key={idx} 
-                    onClick={emoji === card.icon ? handleCorrectIdentify : handleError} 
-                    className={bubbleClass}
-                  >
-                    <span className="text-5xl sm:text-9xl leading-none">{emoji}</span>
-                  </button>
-                ))}
+                {emojiChoices.map((emoji, idx) => {
+                    const isWrong = wrongPick === emoji;
+                    const showHint = hintActive && emoji === card.icon;
+                    return (
+                      <button 
+                        key={idx} 
+                        onClick={emoji === card.icon ? handleCorrectIdentify : () => handleGentleError(emoji)} 
+                        className={`${bubbleClass} ${
+                          isWrong ? 'opacity-40 scale-95' : showHint ? 'ring-4 ring-yellow-400 animate-pulse scale-105' : ''
+                        }`}
+                      >
+                        <span className="text-5xl sm:text-9xl leading-none">{emoji}</span>
+                        {showHint && <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-yellow-400 px-3 py-0.5 rounded-full text-xs font-bold text-yellow-900 shadow-lg whitespace-nowrap">¡Aquí!</span>}
+                      </button>
+                    );
+                })}
             </div>
+            {wrongPick && (
+              <div className="mt-4 flex flex-col items-center gap-2">
+                <span className="text-4xl floating-gumi">👾</span>
+                <p className="text-lg sm:text-2xl font-magic text-cyan-300 uppercase tracking-wide">¡Vamos a intentarlo juntos!</p>
+              </div>
+            )}
           </div>
         )}
 
@@ -199,18 +218,31 @@ const GameBoard: React.FC<Props> = ({ user, card, onComplete, onBack }) => {
             </div>
             
             <div className="flex-1 w-full flex flex-wrap items-center justify-center gap-4 sm:gap-10 px-2 sm:px-4">
-                {letterChoices.map((choice, idx) => (
-                    <button
-                        key={idx}
-                        onClick={choice === card.value ? handleCorrectFindLetter : handleError}
-                        className={letterCardClass}
-                    >
-                        <span className={`font-magic leading-none text-center block text-black tracking-tighter ${choice.length > 2 ? 'text-[50px] sm:text-[90px]' : 'text-[70px] sm:text-[130px]'}`}>
-                            {choice}
-                        </span>
-                    </button>
-                ))}
+                {letterChoices.map((choice, idx) => {
+                    const isWrong = wrongPick === choice;
+                    const showHint = hintActive && choice === card.value;
+                    return (
+                        <button
+                            key={idx}
+                            onClick={choice === card.value ? handleCorrectFindLetter : () => handleGentleError(choice)}
+                            className={`${letterCardClass} ${
+                              isWrong ? 'opacity-40 scale-95' : showHint ? 'ring-4 ring-yellow-400 animate-pulse scale-105' : ''
+                            }`}
+                        >
+                            <span className={`font-magic leading-none text-center block text-black tracking-tighter ${choice.length > 2 ? 'text-[50px] sm:text-[90px]' : 'text-[70px] sm:text-[130px]'}`}>
+                                {choice}
+                            </span>
+                            {showHint && <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-yellow-400 px-3 py-0.5 rounded-full text-xs font-bold text-yellow-900 shadow-lg whitespace-nowrap">¡Aquí!</span>}
+                        </button>
+                    );
+                })}
             </div>
+            {wrongPick && (
+              <div className="mt-4 flex flex-col items-center gap-2">
+                <span className="text-4xl floating-gumi">👾</span>
+                <p className="text-lg sm:text-2xl font-magic text-cyan-300 uppercase tracking-wide">¡Casi! Toca la correcta</p>
+              </div>
+            )}
           </div>
         )}
 
@@ -233,14 +265,6 @@ const GameBoard: React.FC<Props> = ({ user, card, onComplete, onBack }) => {
         {feedback === 'success' && (
             <div className="fixed inset-0 flex items-center justify-center bg-green-500/30 z-[150] backdrop-blur-lg">
                 <span className="text-[120px] sm:text-[200px] animate-bounce">✨</span>
-            </div>
-        )}
-        
-        {feedback === 'error' && (
-            <div className="fixed inset-0 flex items-center justify-center bg-red-500/20 z-[150] backdrop-blur-md">
-                <div className="bg-white p-10 rounded-[3rem] border-8 border-red-500 shadow-2xl">
-                    <span className="text-3xl font-magic text-red-600 uppercase tracking-widest">Intenta de nuevo</span>
-                </div>
             </div>
         )}
       </main>
