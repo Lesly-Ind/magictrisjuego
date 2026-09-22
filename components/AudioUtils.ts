@@ -1,16 +1,51 @@
 
+import { getAudioSettings } from '../services/audioSettings';
+
 let sharedAudioCtx: AudioContext | null = null;
+let voiceGainNode: GainNode | null = null;
 
 export function getSharedAudioContext(): AudioContext {
   if (!sharedAudioCtx) {
     sharedAudioCtx = new (window.AudioContext || (window as any).webkitAudioContext)({ 
       sampleRate: 24000 
     });
+    voiceGainNode = sharedAudioCtx.createGain();
+    voiceGainNode.connect(sharedAudioCtx.destination);
   }
   if (sharedAudioCtx.state === 'suspended') {
     sharedAudioCtx.resume();
   }
   return sharedAudioCtx;
+}
+
+export function getVoiceGainNode(): GainNode {
+  const ctx = getSharedAudioContext();
+  if (!voiceGainNode) {
+    voiceGainNode = ctx.createGain();
+    voiceGainNode.connect(ctx.destination);
+  }
+  updateVoiceGain();
+  return voiceGainNode;
+}
+
+function updateVoiceGain() {
+  if (!voiceGainNode) return;
+  const settings = getAudioSettings();
+  voiceGainNode.gain.value = settings.voiceVolume / 100;
+}
+
+function getEffectsGainMultiplier(): number {
+  const settings = getAudioSettings();
+  if (settings.effectsVolume === 'off') return 0;
+  if (settings.effectsVolume === 'soft') return 0.4;
+  return 1;
+}
+
+function getPlaybackRate(): number {
+  const settings = getAudioSettings();
+  if (settings.voiceSpeed === 'fast') return 1.3;
+  if (settings.voiceSpeed === 'normal') return 1.0;
+  return 0.75; // slow — default
 }
 
 export function decode(base64: string) {
@@ -51,17 +86,49 @@ export async function decodeAudioData(
   return buffer;
 }
 
+// Track the currently playing voice source so we can stop it
+let currentVoiceSource: AudioBufferSourceNode | null = null;
+
+export function stopCurrentVoice() {
+  if (currentVoiceSource) {
+    try { currentVoiceSource.stop(); } catch {}
+    try { currentVoiceSource.disconnect(); } catch {}
+    currentVoiceSource = null;
+  }
+}
+
+export async function playVoiceBuffer(buffer: AudioBuffer): Promise<void> {
+  stopCurrentVoice();
+  const ctx = getSharedAudioContext();
+  const gain = getVoiceGainNode();
+  const source = ctx.createBufferSource();
+  source.buffer = buffer;
+  source.playbackRate.value = getPlaybackRate();
+  source.connect(gain);
+  currentVoiceSource = source;
+  return new Promise<void>((resolve) => {
+    source.onended = () => {
+      if (currentVoiceSource === source) currentVoiceSource = null;
+      try { source.disconnect(); } catch {}
+      resolve();
+    };
+    source.start();
+  });
+}
+
 export function playPopSound() {
+  if (getEffectsGainMultiplier() === 0) return;
   try {
     const ctx = getSharedAudioContext();
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
+    const vol = 0.2 * getEffectsGainMultiplier();
 
     osc.type = 'sine';
     osc.frequency.setValueAtTime(400, ctx.currentTime);
     osc.frequency.exponentialRampToValueAtTime(100, ctx.currentTime + 0.1);
 
-    gain.gain.setValueAtTime(0.2, ctx.currentTime);
+    gain.gain.setValueAtTime(vol, ctx.currentTime);
     gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.1);
 
     osc.connect(gain);
@@ -75,16 +142,18 @@ export function playPopSound() {
 }
 
 export function playSuccessSound() {
+  if (getEffectsGainMultiplier() === 0) return;
   try {
     const ctx = getSharedAudioContext();
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
+    const vol = 0.2 * getEffectsGainMultiplier();
 
     osc.type = 'triangle';
-    osc.frequency.setValueAtTime(523.25, ctx.currentTime); // C5
-    osc.frequency.exponentialRampToValueAtTime(783.99, ctx.currentTime + 0.2); // G5
+    osc.frequency.setValueAtTime(523.25, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(783.99, ctx.currentTime + 0.2);
 
-    gain.gain.setValueAtTime(0.2, ctx.currentTime);
+    gain.gain.setValueAtTime(vol, ctx.currentTime);
     gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
 
     osc.connect(gain);

@@ -9,7 +9,10 @@ import {
 } from '../services/masteryService';
 import VoiceButton from './VoiceButton';
 import GumiGuide from './GumiGuide';
-import { playPopSound, playSuccessSound } from './AudioUtils';
+import { playPopSound, playSuccessSound, stopCurrentVoice } from './AudioUtils';
+import { getRandomPraise, getRandomGentleGuide } from '../services/feedbackPhrases';
+import { textToSpeech } from '../services/gemini';
+import { decode, decodeAudioData, getSharedAudioContext, playVoiceBuffer } from './AudioUtils';
 
 interface Props {
   user: User;
@@ -44,6 +47,7 @@ const WordLearning: React.FC<Props> = ({ user, onBack, onComplete }) => {
   }, [loadProgress]);
 
   const handleBack = () => {
+    stopCurrentVoice();
     playPopSound();
     if (step === 'select') {
       onBack();
@@ -55,7 +59,21 @@ const WordLearning: React.FC<Props> = ({ user, onBack, onComplete }) => {
     }
   };
 
+  const speakText = async (text: string) => {
+    try {
+      const audioData = await textToSpeech(text);
+      if (!audioData) return;
+      const ctx = getSharedAudioContext();
+      if (ctx.state === 'suspended') await ctx.resume();
+      const buffer = await decodeAudioData(decode(audioData), ctx, 24000, 1);
+      await playVoiceBuffer(buffer);
+    } catch (err) {
+      console.warn('speakText error:', err);
+    }
+  };
+
   const handleSelectWord = (wordId: string) => {
+    stopCurrentVoice();
     playPopSound();
     const word = allWords.find(w => w.id === wordId);
     if (!word) return;
@@ -66,11 +84,13 @@ const WordLearning: React.FC<Props> = ({ user, onBack, onComplete }) => {
   };
 
   const handleStartRelate = () => {
+    stopCurrentVoice();
     playPopSound();
     setStep('relate');
   };
 
   const handleStartRecognize = () => {
+    stopCurrentVoice();
     playPopSound();
     setStep('recognize');
   };
@@ -95,6 +115,7 @@ const WordLearning: React.FC<Props> = ({ user, onBack, onComplete }) => {
   const handleRelatePick = async (pickedId: string, isCorrect: boolean) => {
     if (isCorrect) {
       playSuccessSound();
+      stopCurrentVoice();
       if (currentWord) {
         await recordAttempt(user.id, currentWord.id, CONTENT_TYPE, true);
         await loadProgress();
@@ -103,7 +124,9 @@ const WordLearning: React.FC<Props> = ({ user, onBack, onComplete }) => {
       setWrongPick(null);
       setHintActive(false);
     } else {
+      stopCurrentVoice();
       handleWrongAnswer(pickedId);
+      speakText(getRandomGentleGuide());
     }
   };
 
@@ -122,6 +145,7 @@ const WordLearning: React.FC<Props> = ({ user, onBack, onComplete }) => {
   const handleRecognizePick = async (pickedId: string, isCorrect: boolean) => {
     if (isCorrect) {
       playSuccessSound();
+      stopCurrentVoice();
       if (currentWord) {
         await recordAttempt(user.id, currentWord.id, CONTENT_TYPE, true);
         await loadProgress();
@@ -130,11 +154,14 @@ const WordLearning: React.FC<Props> = ({ user, onBack, onComplete }) => {
       setWrongPick(null);
       setHintActive(false);
     } else {
+      stopCurrentVoice();
       handleWrongAnswer(pickedId);
+      speakText(getRandomGentleGuide());
     }
   };
 
   const handleCelebrateContinue = () => {
+    stopCurrentVoice();
     playPopSound();
     onComplete(50);
     setStep('select');
@@ -175,6 +202,7 @@ const WordLearning: React.FC<Props> = ({ user, onBack, onComplete }) => {
           <GumiGuide
             message="¡Vamos a aprender tus primeras palabras! Toca una para empezar."
             size="medium"
+            autoSpeak
           />
         </div>
 
@@ -240,13 +268,15 @@ const WordLearning: React.FC<Props> = ({ user, onBack, onComplete }) => {
             <div className="flex flex-col items-center gap-4">
               <VoiceButton
                 text={currentWord.audioInstruction}
-                className="!px-12 !py-6 !text-2xl bg-cyan-500 rounded-full border-b-[6px] border-cyan-800"
+                size="large"
+                autoPlay
+                className="bg-cyan-500 rounded-full border-b-[6px] border-cyan-800"
               />
-              <span className="text-sm font-bold text-cyan-300 uppercase tracking-widest">Toca para escuchar</span>
+              <span className="text-sm font-bold text-cyan-300 uppercase tracking-widest">Toca para repetir</span>
             </div>
 
             <div className="flex justify-center">
-              <GumiGuide message="¡Mira y escucha! Esta es tu palabra." size="small" />
+              <GumiGuide message="¡Mira y escucha! Esta es tu palabra." size="small" autoSpeak />
             </div>
 
             <button
@@ -312,7 +342,7 @@ const WordLearning: React.FC<Props> = ({ user, onBack, onComplete }) => {
 
           {wrongPick && (
             <div className="mt-6">
-              <GumiGuide message="¡Vamos a intentarlo juntos! Toca la correcta." size="small" />
+              <GumiGuide message="¡Vamos a intentarlo juntos! Toca la correcta." size="small" autoSpeak />
             </div>
           )}
 
@@ -320,8 +350,11 @@ const WordLearning: React.FC<Props> = ({ user, onBack, onComplete }) => {
             <div className="mt-6">
               <VoiceButton
                 text={currentWord.audioInstruction}
-                className="!px-8 !py-4 !text-xl bg-cyan-500 rounded-full border-b-[4px] border-cyan-800"
+                size="large"
+                autoPlay
+                className="bg-cyan-500 rounded-full border-b-[4px] border-cyan-800"
               />
+              <span className="block mt-2 text-sm font-bold text-cyan-300 uppercase tracking-widest text-center">Toca para repetir</span>
             </div>
           )}
         </main>
@@ -351,8 +384,11 @@ const WordLearning: React.FC<Props> = ({ user, onBack, onComplete }) => {
           <div className="mb-8">
             <VoiceButton
               text={currentWord.audioInstruction}
-              className="!px-12 !py-6 !text-3xl bg-cyan-500 rounded-full border-b-[6px] border-cyan-800"
+              size="large"
+              autoPlay
+              className="bg-cyan-500 rounded-full border-b-[6px] border-cyan-800"
             />
+            <span className="block mt-2 text-sm font-bold text-cyan-300 uppercase tracking-widest text-center">Toca para repetir</span>
           </div>
 
           <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6 w-full">
@@ -387,7 +423,7 @@ const WordLearning: React.FC<Props> = ({ user, onBack, onComplete }) => {
 
           {wrongPick && (
             <div className="mt-6">
-              <GumiGuide message="¡Casi! Escucha otra vez y toca la correcta." size="small" />
+              <GumiGuide message="¡Casi! Escucha otra vez y toca la correcta." size="small" autoSpeak />
             </div>
           )}
         </main>
@@ -415,7 +451,7 @@ const WordLearning: React.FC<Props> = ({ user, onBack, onComplete }) => {
             </p>
           </div>
 
-          <GumiGuide message={currentWord.celebrationPhrase} size="medium" />
+          <GumiGuide message={currentWord.celebrationPhrase} size="medium" autoSpeak />
 
           <button
             onClick={handleCelebrateContinue}

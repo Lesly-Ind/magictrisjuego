@@ -2,7 +2,10 @@
 import React, { useState, useMemo } from 'react';
 import { User, MagicCard, GameState } from '../types';
 import VoiceButton from './VoiceButton';
-import { playPopSound, playSuccessSound } from './AudioUtils';
+import { playPopSound, playSuccessSound, stopCurrentVoice } from './AudioUtils';
+import { getRandomPraise, getRandomGentleGuide } from '../services/feedbackPhrases';
+import { textToSpeech } from '../services/gemini';
+import { decode, decodeAudioData, getSharedAudioContext, playVoiceBuffer } from './AudioUtils';
 import { MAGIC_PATH } from '../services/mockData';
 
 interface Props {
@@ -44,8 +47,23 @@ const GameBoard: React.FC<Props> = ({ user, card, onComplete, onBack }) => {
     return [...selected, card.icon].sort(() => Math.random() - 0.5);
   }, [card.icon]);
 
+  const speakText = async (text: string) => {
+    try {
+      const audioData = await textToSpeech(text);
+      if (!audioData) return;
+      const ctx = getSharedAudioContext();
+      if (ctx.state === 'suspended') await ctx.resume();
+      const buffer = await decodeAudioData(decode(audioData), ctx, 24000, 1);
+      await playVoiceBuffer(buffer);
+    } catch (err) {
+      console.warn('speakText error:', err);
+    }
+  };
+
   const handleCorrectIdentify = () => {
     playSuccessSound();
+    stopCurrentVoice();
+    speakText(getRandomPraise());
     setFeedback('success');
     setWrongPick(null);
     setHintActive(false);
@@ -57,6 +75,8 @@ const GameBoard: React.FC<Props> = ({ user, card, onComplete, onBack }) => {
 
   const handleCorrectFindLetter = () => {
     playSuccessSound();
+    stopCurrentVoice();
+    speakText(getRandomPraise());
     setFeedback('success');
     setWrongPick(null);
     setHintActive(false);
@@ -67,22 +87,27 @@ const GameBoard: React.FC<Props> = ({ user, card, onComplete, onBack }) => {
   };
 
   const handleGentleError = (pickedValue: string) => {
+    stopCurrentVoice();
     playPopSound();
     setWrongPick(pickedValue);
     setHintActive(true);
+    speakText(getRandomGentleGuide());
   };
 
   const handleBack = () => {
+    stopCurrentVoice();
     playPopSound();
     onBack();
   };
 
   const handleStartGame = () => {
+    stopCurrentVoice();
     playPopSound();
     setGameState('identify');
   };
 
   const handleComplete = () => {
+    stopCurrentVoice();
     playPopSound();
     onComplete(100);
   };
@@ -159,7 +184,7 @@ const GameBoard: React.FC<Props> = ({ user, card, onComplete, onBack }) => {
                 <div className="space-y-4 sm:space-y-6">
                     <p className="text-xl sm:text-4xl font-bold text-cyan-300 uppercase tracking-widest leading-tight">{card.description}</p>
                     <div className="flex flex-col gap-3 sm:gap-4">
-                        <VoiceButton text={card.audioInstruction} className="py-3 sm:py-4 bg-indigo-500 rounded-full border-b-[6px] sm:border-b-[8px] border-indigo-800" />
+                        <VoiceButton text={card.audioInstruction} size="large" autoPlay className="py-3 sm:py-4 bg-indigo-500 rounded-full border-b-[6px] sm:border-b-[8px] border-indigo-800" />
                         <button 
                             onClick={handleStartGame}
                             className="bg-pink-500 text-white py-4 sm:py-6 rounded-[2rem] sm:rounded-[2.5rem] text-2xl sm:text-3xl font-magic shadow-2xl hover:bg-pink-600 border-b-[6px] sm:border-b-[8px] border-pink-800 transition-all active:translate-y-1 uppercase tracking-widest"

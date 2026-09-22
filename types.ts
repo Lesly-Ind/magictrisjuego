@@ -60,6 +60,23 @@ export interface VideoGenerationOptions {
   resolution: '720p' | '1080p';
 }
 
+// ====== Audio Settings ======
+
+export type VoiceSpeed = 'slow' | 'normal' | 'fast';
+export type EffectsVolume = 'normal' | 'soft' | 'off';
+
+export interface AudioSettings {
+  voiceVolume: number;       // 0, 25, 50, 75, 100
+  voiceSpeed: VoiceSpeed;    // slow, normal, fast
+  effectsVolume: EffectsVolume; // normal, soft, off
+}
+
+export const DEFAULT_AUDIO_SETTINGS: AudioSettings = {
+  voiceVolume: 100,
+  voiceSpeed: 'slow',
+  effectsVolume: 'normal',
+};
+
 // ====== New: First Words learning system ======
 
 export interface WordItem {
