@@ -1,0 +1,8 @@
+{
+  "name": "MagicTris - El Mundo de Gumi",
+  "description": "Una plataforma mágica de aprendizaje con IA para niños, con voz, imágenes y juegos.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
