@@ -14,6 +14,7 @@ import MediaGenerator from './components/MediaGenerator';
 import WordLearning from './components/WordLearning';
 import { MAGIC_PATH } from './services/mockData';
 import { supabase, isSupabaseReady } from './services/supabaseClient';
+import { loadAudioSettings } from './services/audioSettings';
 
 const App: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -54,29 +55,36 @@ const App: React.FC = () => {
   useEffect(() => {
     const initApp = async () => {
       try {
-        const localData = localStorage.getItem('magic_user');
-        if (localData) {
-          const parsed = JSON.parse(localData);
-          setUser(mapProfileToUser(parsed));
-          setSection('hub');
-        }
+      let resolvedUser: User | null = null;
+      const localData = localStorage.getItem('magic_user');
+      if (localData) {
+        const parsed = JSON.parse(localData);
+        resolvedUser = mapProfileToUser(parsed);
+        setUser(resolvedUser);
+        setSection('hub');
+      }
 
-        if (isSupabaseReady()) {
-          // Fix: Using cast to bypass potential type mismatches in Supabase library versions
-          const { data: { session } } = await (supabase!.auth as any).getSession();
-          if (session?.user) {
-            const { data: profile } = await supabase!
-              .from('profiles')
-              .select('*')
-              .eq('id', session.user.id)
-              .single();
-            if (profile) {
-              const updatedUser = mapProfileToUser(profile);
-              setUser(updatedUser);
-              localStorage.setItem('magic_user', JSON.stringify(updatedUser));
-            }
+      if (isSupabaseReady()) {
+        // Fix: Using cast to bypass potential type mismatches in Supabase library versions
+        const { data: { session } } = await (supabase!.auth as any).getSession();
+        if (session?.user) {
+          const { data: profile } = await supabase!
+            .from('profiles')
+            .select('*')
+            .eq('id', session.user.id)
+            .single();
+          if (profile) {
+            const updatedUser = mapProfileToUser(profile);
+            resolvedUser = updatedUser;
+            setUser(updatedUser);
+            localStorage.setItem('magic_user', JSON.stringify(updatedUser));
           }
         }
+      }
+
+      // Load audio preferences for the resolved user (or guest)
+      const userIdForAudio = resolvedUser?.id || 'guest';
+      await loadAudioSettings(userIdForAudio);
       } catch (err) {
         console.warn("Sincronización local:", err);
       } finally {
@@ -141,10 +149,10 @@ const App: React.FC = () => {
     }
     switch (section) {
       case 'pre-login': return <PreLogin onStart={() => setSection('login')} />;
-      case 'login': return <Auth mode="login" onAuthSuccess={(u) => { setUser(u); setSection('hub'); }} toggleMode={() => setSection('register')} />;
-      case 'register': return <Auth mode="register" onAuthSuccess={(u) => { setUser(u); setSection('hub'); }} toggleMode={() => setSection('login')} />;
+      case 'login': return <Auth mode="login" onAuthSuccess={(u) => { setUser(u); loadAudioSettings(u.id); setSection('hub'); }} toggleMode={() => setSection('register')} />;
+      case 'register': return <Auth mode="register" onAuthSuccess={(u) => { setUser(u); loadAudioSettings(u.id); setSection('hub'); }} toggleMode={() => setSection('login')} />;
       case 'hub': return user ? <Hub user={user} setSection={setSection as any} onSelectCard={setSelectedCardIndex} /> : null;
-      case 'profile': return user ? <Profile user={user} onBack={() => setSection('hub')} onLogout={() => { setUser(null); localStorage.removeItem('magic_user'); setSection('pre-login'); }} onUpdate={(upd) => setUser({...user, ...upd})} /> : null;
+      case 'profile': return user ? <Profile user={user} onBack={() => setSection('hub')} onLogout={() => { setUser(null); localStorage.removeItem('magic_user'); loadAudioSettings('guest'); setSection('pre-login'); }} onUpdate={(upd) => setUser({...user, ...upd})} /> : null;
       case 'info': return <Info onBack={() => setSection('hub')} />;
       case 'printable': return <PrintableCards onBack={() => setSection('hub')} />;
       case 'words': return user ? <WordLearning user={user} onBack={() => setSection('hub')} onComplete={(scoreGain) => {

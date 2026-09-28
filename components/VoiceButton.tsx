@@ -1,7 +1,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { textToSpeech } from '../services/gemini';
-import { decode, decodeAudioData, playVoiceBuffer, stopCurrentVoice, playPopSound } from './AudioUtils';
+import { decode, decodeAudioData, getSharedAudioContext, playVoiceBuffer, stopCurrentVoice, playPopSound } from './AudioUtils';
 
 interface Props {
   text: string;
@@ -47,7 +47,7 @@ const VoiceButton: React.FC<Props> = ({ text, className, autoPlay = false, size 
     if (!isMounted.current) return;
 
     if (audioData) {
-      const ctx = (await import('./AudioUtils')).getSharedAudioContext();
+      const ctx = getSharedAudioContext();
       if (ctx.state === 'suspended') await ctx.resume();
       const buffer = await decodeAudioData(decode(audioData), ctx, 24000, 1);
       if (!isMounted.current) return;

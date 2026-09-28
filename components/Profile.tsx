@@ -1,7 +1,8 @@
 
-import React, { useState } from 'react';
-import { User } from '../types';
+import React, { useState, useEffect } from 'react';
+import { User, AudioSettings, VoiceSpeed, EffectsVolume, DEFAULT_AUDIO_SETTINGS } from '../types';
 import { playPopSound } from './AudioUtils';
+import { getAudioSettings, saveAudioSettings, subscribeToAudioSettings } from '../services/audioSettings';
 
 interface Props { 
     user: User; 
@@ -14,6 +15,19 @@ const Profile: React.FC<Props> = ({ user, onBack, onLogout, onUpdate }) => {
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [tempNickname, setTempNickname] = useState(user.nickname);
   const avatars = ['🐧', '👾', '🤖', '🦋', '🦁', '⭐', '🐻‍❄️', '🐥'];
+
+  const [audioSettings, setAudioSettings] = useState<AudioSettings>({ ...DEFAULT_AUDIO_SETTINGS });
+
+  useEffect(() => {
+    const unsub = subscribeToAudioSettings((s) => setAudioSettings(s));
+    return unsub;
+  }, []);
+
+  const handleAudioChange = (partial: Partial<AudioSettings>) => {
+    const updated = { ...audioSettings, ...partial };
+    setAudioSettings(updated);
+    saveAudioSettings(user.id, updated);
+  };
 
   const handleBack = () => {
     playPopSound();
@@ -122,8 +136,90 @@ const Profile: React.FC<Props> = ({ user, onBack, onLogout, onUpdate }) => {
             </div>
           </div>
 
-          <button 
-            onClick={handleLogoutClick}
+          {/* Audio Settings Section */}
+          <div className="bg-cyan-50/60 p-5 rounded-[2.5rem] border-2 border-cyan-200 space-y-5">
+            <h3 className="text-sm font-magic text-cyan-700 text-center uppercase tracking-tighter flex items-center justify-center gap-2">
+              <span aria-hidden="true">🔊</span> Configuración de Audio
+            </h3>
+
+            {/* Voice Speed */}
+            <div className="space-y-2">
+              <label className="text-[10px] font-magic text-cyan-600 uppercase tracking-widest ml-2 block">Velocidad de Voz</label>
+              <div className="flex gap-2">
+                {([
+                  { value: 'slow', label: '🐢 Lenta' },
+                  { value: 'normal', label: '🚶 Normal' },
+                  { value: 'fast', label: '🐇 Rápida' },
+                ] as { value: VoiceSpeed; label: string }[]).map(opt => (
+                  <button
+                    key={opt.value}
+                    onClick={() => handleAudioChange({ voiceSpeed: opt.value })}
+                    className={`flex-1 py-3 px-2 rounded-2xl text-sm font-bold transition-all border-2 ${
+                      audioSettings.voiceSpeed === opt.value
+                        ? 'bg-cyan-500 text-white border-cyan-600 shadow-md scale-105'
+                        : 'bg-white text-cyan-600 border-cyan-100 hover:bg-cyan-50'
+                    }`}
+                    aria-pressed={audioSettings.voiceSpeed === opt.value}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Voice Volume */}
+            <div className="space-y-2">
+              <label className="text-[10px] font-magic text-cyan-600 uppercase tracking-widest ml-2 block">Volumen de Voz</label>
+              <div className="flex gap-2">
+                {[0, 25, 50, 75, 100].map(vol => (
+                  <button
+                    key={vol}
+                    onClick={() => handleAudioChange({ voiceVolume: vol })}
+                    className={`flex-1 py-3 px-1 rounded-2xl text-sm font-bold transition-all border-2 ${
+                      audioSettings.voiceVolume === vol
+                        ? 'bg-cyan-500 text-white border-cyan-600 shadow-md scale-105'
+                        : 'bg-white text-cyan-600 border-cyan-100 hover:bg-cyan-50'
+                    }`}
+                    aria-pressed={audioSettings.voiceVolume === vol}
+                    aria-label={`Volumen de voz ${vol} por ciento`}
+                  >
+                    {vol}%
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Effects Volume */}
+            <div className="space-y-2">
+              <label className="text-[10px] font-magic text-cyan-600 uppercase tracking-widest ml-2 block">Sonidos de Interfaz</label>
+              <div className="flex gap-2">
+                {([
+                  { value: 'normal', label: '🔔 Normal' },
+                  { value: 'soft', label: '🍃 Suave' },
+                  { value: 'off', label: '🚫 Apagado' },
+                ] as { value: EffectsVolume; label: string }[]).map(opt => (
+                  <button
+                    key={opt.value}
+                    onClick={() => handleAudioChange({ effectsVolume: opt.value })}
+                    className={`flex-1 py-3 px-2 rounded-2xl text-sm font-bold transition-all border-2 ${
+                      audioSettings.effectsVolume === opt.value
+                        ? 'bg-cyan-500 text-white border-cyan-600 shadow-md scale-105'
+                        : 'bg-white text-cyan-600 border-cyan-100 hover:bg-cyan-50'
+                    }`}
+                    aria-pressed={audioSettings.effectsVolume === opt.value}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <p className="text-[10px] text-cyan-500 text-center italic">
+              {user.id === 'guest' ? 'Se guardan en este dispositivo.' : 'Se guardan en tu cuenta.'}
+            </p>
+          </div>
+
+          <button
             className="w-full bg-red-50 text-red-500 py-4 rounded-full text-xl font-magic border-2 border-red-100 hover:bg-red-500 hover:text-white transition-all shadow-sm active:scale-95 uppercase tracking-tighter"
           >
             Cerrar Sesión
