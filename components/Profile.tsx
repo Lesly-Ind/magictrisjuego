@@ -154,12 +154,13 @@ const Profile: React.FC<Props> = ({ user, onBack, onLogout, onUpdate }) => {
                   <button
                     key={opt.value}
                     onClick={() => handleAudioChange({ voiceSpeed: opt.value })}
-                    className={`flex-1 py-3 px-2 rounded-2xl text-sm font-bold transition-all border-2 ${
+                    className={`flex-1 py-3 px-2 rounded-2xl text-sm font-bold transition-all border-2 min-h-[64px] flex items-center justify-center ${
                       audioSettings.voiceSpeed === opt.value
                         ? 'bg-cyan-500 text-white border-cyan-600 shadow-md scale-105'
                         : 'bg-white text-cyan-600 border-cyan-100 hover:bg-cyan-50'
                     }`}
                     aria-pressed={audioSettings.voiceSpeed === opt.value}
+                    aria-label={`Velocidad de voz ${opt.label}`}
                   >
                     {opt.label}
                   </button>
@@ -175,7 +176,7 @@ const Profile: React.FC<Props> = ({ user, onBack, onLogout, onUpdate }) => {
                   <button
                     key={vol}
                     onClick={() => handleAudioChange({ voiceVolume: vol })}
-                    className={`flex-1 py-3 px-1 rounded-2xl text-sm font-bold transition-all border-2 ${
+                    className={`flex-1 py-3 px-1 rounded-2xl text-sm font-bold transition-all border-2 min-h-[64px] flex items-center justify-center ${
                       audioSettings.voiceVolume === vol
                         ? 'bg-cyan-500 text-white border-cyan-600 shadow-md scale-105'
                         : 'bg-white text-cyan-600 border-cyan-100 hover:bg-cyan-50'
@@ -201,12 +202,13 @@ const Profile: React.FC<Props> = ({ user, onBack, onLogout, onUpdate }) => {
                   <button
                     key={opt.value}
                     onClick={() => handleAudioChange({ effectsVolume: opt.value })}
-                    className={`flex-1 py-3 px-2 rounded-2xl text-sm font-bold transition-all border-2 ${
+                    className={`flex-1 py-3 px-2 rounded-2xl text-sm font-bold transition-all border-2 min-h-[64px] flex items-center justify-center ${
                       audioSettings.effectsVolume === opt.value
                         ? 'bg-cyan-500 text-white border-cyan-600 shadow-md scale-105'
                         : 'bg-white text-cyan-600 border-cyan-100 hover:bg-cyan-50'
                     }`}
                     aria-pressed={audioSettings.effectsVolume === opt.value}
+                    aria-label={`Sonidos de interfaz ${opt.label}`}
                   >
                     {opt.label}
                   </button>
@@ -215,6 +217,67 @@ const Profile: React.FC<Props> = ({ user, onBack, onLogout, onUpdate }) => {
             </div>
 
             <p className="text-[10px] text-cyan-500 text-center italic">
+              {user.id === 'guest' ? 'Se guardan en este dispositivo.' : 'Se guardan en tu cuenta.'}
+            </p>
+          </div>
+
+          {/* Accessibility Section */}
+          <div className="bg-emerald-50/60 p-5 rounded-[2.5rem] border-2 border-emerald-200 space-y-5">
+            <h3 className="text-sm font-magic text-emerald-700 text-center uppercase tracking-tighter flex items-center justify-center gap-2">
+              <span aria-hidden="true">♿</span> Accesibilidad
+            </h3>
+
+            {/* High Contrast Toggle */}
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex-1">
+                <p className="text-sm font-bold text-emerald-800 uppercase tracking-wide">Alto Contraste</p>
+                <p className="text-[10px] text-emerald-600 mt-1">Aumenta el contraste de textos y botones.</p>
+              </div>
+              <button
+                onClick={() => handleAudioChange({ highContrast: !audioSettings.highContrast })}
+                className={`relative w-16 h-10 rounded-full transition-all border-2 min-h-[44px] ${
+                  audioSettings.highContrast
+                    ? 'bg-emerald-500 border-emerald-600'
+                    : 'bg-gray-200 border-gray-300'
+                }`}
+                role="switch"
+                aria-checked={audioSettings.highContrast}
+                aria-label="Activar alto contraste"
+              >
+                <span
+                  className={`absolute top-1 left-1 w-7 h-7 rounded-full bg-white shadow-md transition-transform ${
+                    audioSettings.highContrast ? 'translate-x-6' : ''
+                  }`}
+                />
+              </button>
+            </div>
+
+            {/* Reduce Motion Toggle */}
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex-1">
+                <p className="text-sm font-bold text-emerald-800 uppercase tracking-wide">Reducir Animaciones</p>
+                <p className="text-[10px] text-emerald-600 mt-1">Reduce movimientos y efectos visuales.</p>
+              </div>
+              <button
+                onClick={() => handleAudioChange({ reduceMotion: !audioSettings.reduceMotion })}
+                className={`relative w-16 h-10 rounded-full transition-all border-2 min-h-[44px] ${
+                  audioSettings.reduceMotion
+                    ? 'bg-emerald-500 border-emerald-600'
+                    : 'bg-gray-200 border-gray-300'
+                }`}
+                role="switch"
+                aria-checked={audioSettings.reduceMotion}
+                aria-label="Activar reducción de animaciones"
+              >
+                <span
+                  className={`absolute top-1 left-1 w-7 h-7 rounded-full bg-white shadow-md transition-transform ${
+                    audioSettings.reduceMotion ? 'translate-x-6' : ''
+                  }`}
+                />
+              </button>
+            </div>
+
+            <p className="text-[10px] text-emerald-500 text-center italic">
               {user.id === 'guest' ? 'Se guardan en este dispositivo.' : 'Se guardan en tu cuenta.'}
             </p>
           </div>

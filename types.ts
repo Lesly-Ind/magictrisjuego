@@ -69,12 +69,16 @@ export interface AudioSettings {
   voiceVolume: number;       // 0, 25, 50, 75, 100
   voiceSpeed: VoiceSpeed;    // slow, normal, fast
   effectsVolume: EffectsVolume; // normal, soft, off
+  highContrast: boolean;     // alto contraste ON/OFF
+  reduceMotion: boolean;     // reducir animaciones ON/OFF
 }
 
 export const DEFAULT_AUDIO_SETTINGS: AudioSettings = {
   voiceVolume: 100,
   voiceSpeed: 'slow',
   effectsVolume: 'normal',
+  highContrast: false,
+  reduceMotion: false,
 };
 
 // ====== New: First Words learning system ======
@@ -83,6 +87,13 @@ export interface WordItem {
   id: string;
   word: string;
   imageUrl: string;
+  altText: string;
+  category: string;
+  imageCredit?: string;
+  isPhotoReal?: boolean;
+  customImageUrl?: string;
+  signLanguageUrl?: string;
+  signLanguageType?: 'video' | 'gif' | 'image';
   audioInstruction: string;
   celebrationPhrase: string;
   isDynamic?: boolean;

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { User, WordItem, ContentProgress, ContentType } from '../types';
-import { getAllWordItems, getDistractorImages, getDistractorWords } from '../services/wordData';
+import { getAllWordItems, getDistractorImages, getDistractorWords, getEffectiveImageUrl } from '../services/wordData';
 import {
   fetchAllProgress,
   recordAttempt,
@@ -193,7 +193,8 @@ const WordLearning: React.FC<Props> = ({ user, onBack, onComplete }) => {
       <div className="min-h-screen flex flex-col pt-20 pb-10 px-4 max-w-4xl mx-auto w-full">
         <button
           onClick={handleBack}
-          className="self-start mb-6 bg-white/80 backdrop-blur-md p-3 rounded-2xl shadow-lg border-2 border-blue-200 text-xl active:scale-90 transition-transform"
+          aria-label="Volver al inicio"
+          className="self-start mb-6 bg-white/80 backdrop-blur-md p-3 rounded-2xl shadow-lg border-2 border-blue-200 text-xl active:scale-90 transition-transform focus:outline-none focus:ring-4 focus:ring-blue-200 min-h-[64px]"
         >
           🏠
         </button>
@@ -217,23 +218,29 @@ const WordLearning: React.FC<Props> = ({ user, onBack, onComplete }) => {
               <button
                 key={word.id}
                 onClick={() => handleSelectWord(word.id)}
-                className="group bg-white/90 backdrop-blur-md rounded-[2rem] shadow-xl border-4 border-white overflow-hidden transition-all hover:scale-[1.03] active:scale-95 flex flex-col"
+                aria-label={`Aprender la palabra ${word.word}`}
+                className="group bg-white/90 backdrop-blur-md rounded-[2rem] shadow-xl border-4 border-white overflow-hidden transition-all hover:scale-[1.03] active:scale-95 flex flex-col min-h-[64px] focus:outline-none focus:ring-4 focus:ring-cyan-200"
               >
                 <div className="relative w-full aspect-[4/3] overflow-hidden bg-gray-100">
                   <img
-                    src={word.imageUrl}
-                    alt={word.word}
+                    src={getEffectiveImageUrl(word)}
+                    alt={word.altText || word.word}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).style.display = 'none';
+                      (e.target as HTMLImageElement).parentElement!.classList.add('flex', 'items-center', 'justify-center');
+                      (e.target as HTMLImageElement).parentElement!.innerHTML = '<span class="text-6xl">🖼️</span>';
+                    }}
                   />
                   <div className={`absolute top-2 right-2 px-3 py-1 rounded-full text-xs font-bold shadow-md ${mastery.color}`}>
                     {mastery.icon} {mastery.label}
                   </div>
                 </div>
-                <div className="p-4 flex items-center justify-between">
+                <div className="p-4 flex items-center justify-between min-h-[64px]">
                   <span className="text-2xl sm:text-3xl font-magic text-indigo-800 uppercase tracking-tight">
                     {word.word}
                   </span>
-                  <span className="text-2xl">👆</span>
+                  <span className="text-2xl" aria-hidden="true">👆</span>
                 </div>
               </button>
             );
@@ -248,7 +255,7 @@ const WordLearning: React.FC<Props> = ({ user, onBack, onComplete }) => {
     return (
       <div className="fixed inset-0 bg-indigo-950 z-[100] flex flex-col p-4 sm:p-6 overflow-y-auto">
         <header className="relative z-10 flex justify-between items-center mb-4 shrink-0">
-          <button onClick={handleBack} className="bg-white/10 p-3 rounded-2xl border-2 border-white/20 text-2xl hover:bg-white/30 transition-all active:scale-90 shadow-lg">🏠</button>
+          <button onClick={handleBack} aria-label="Volver" className="bg-white/10 p-3 rounded-2xl border-2 border-white/20 text-2xl hover:bg-white/30 transition-all active:scale-90 shadow-lg focus:outline-none focus:ring-4 focus:ring-cyan-200 min-h-[64px] flex items-center justify-center">🏠</button>
           <div className="bg-white/10 px-6 py-2 rounded-full border-2 border-cyan-400 backdrop-blur-md">
             <h2 className="text-sm sm:text-lg font-magic text-white uppercase tracking-tighter">Conocer la palabra</h2>
           </div>
@@ -258,7 +265,16 @@ const WordLearning: React.FC<Props> = ({ user, onBack, onComplete }) => {
         <main className="relative z-10 flex-1 flex flex-col items-center justify-center max-w-2xl mx-auto w-full">
           <div className="bg-white/10 backdrop-blur-2xl p-6 sm:p-10 rounded-[3rem] border-2 border-white/30 w-full space-y-6 shadow-2xl">
             <div className="bg-white rounded-[2rem] overflow-hidden shadow-xl border-4 border-white">
-              <img src={currentWord.imageUrl} alt={currentWord.word} className="w-full aspect-square object-cover" />
+              <img
+                src={getEffectiveImageUrl(currentWord)}
+                alt={currentWord.altText || currentWord.word}
+                className="w-full aspect-square object-cover"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).style.display = 'none';
+                  (e.target as HTMLImageElement).parentElement!.classList.add('flex', 'items-center', 'justify-center');
+                  (e.target as HTMLImageElement).parentElement!.innerHTML = '<span class="text-8xl p-12">🖼️</span>';
+                }}
+              />
             </div>
 
             <h3 className="text-5xl sm:text-7xl font-magic text-white text-center uppercase tracking-tighter drop-shadow-lg">
@@ -281,7 +297,8 @@ const WordLearning: React.FC<Props> = ({ user, onBack, onComplete }) => {
 
             <button
               onClick={handleStartRelate}
-              className="w-full bg-pink-500 text-white py-5 rounded-[2rem] text-2xl font-magic shadow-2xl hover:bg-pink-600 border-b-[6px] border-pink-800 transition-all active:translate-y-1 uppercase tracking-widest"
+              aria-label="Siguiente actividad"
+              className="w-full bg-pink-500 text-white py-5 rounded-[2rem] text-2xl font-magic shadow-2xl hover:bg-pink-600 border-b-[6px] border-pink-800 transition-all active:translate-y-1 uppercase tracking-widest min-h-[64px] focus:outline-none focus:ring-4 focus:ring-pink-200"
             >
               SIGUIENTE
             </button>
@@ -296,7 +313,7 @@ const WordLearning: React.FC<Props> = ({ user, onBack, onComplete }) => {
     return (
       <div className="fixed inset-0 bg-indigo-950 z-[100] flex flex-col p-4 sm:p-6 overflow-y-auto">
         <header className="relative z-10 flex justify-between items-center mb-4 shrink-0">
-          <button onClick={handleBack} className="bg-white/10 p-3 rounded-2xl border-2 border-white/20 text-2xl hover:bg-white/30 transition-all active:scale-90 shadow-lg">🏠</button>
+          <button onClick={handleBack} aria-label="Volver" className="bg-white/10 p-3 rounded-2xl border-2 border-white/20 text-2xl hover:bg-white/30 transition-all active:scale-90 shadow-lg focus:outline-none focus:ring-4 focus:ring-cyan-200 min-h-[64px] flex items-center justify-center">🏠</button>
           <div className="bg-white/10 px-6 py-2 rounded-full border-2 border-cyan-400 backdrop-blur-md">
             <h2 className="text-sm sm:text-lg font-magic text-white uppercase tracking-tighter">Elegir la imagen</h2>
           </div>
@@ -318,7 +335,8 @@ const WordLearning: React.FC<Props> = ({ user, onBack, onComplete }) => {
                 <button
                   key={choice.id}
                   onClick={() => handleRelatePick(choice.id, choice.isCorrect)}
-                  className={`relative bg-white rounded-[2rem] overflow-hidden shadow-2xl border-4 transition-all active:scale-95 ${
+                  aria-label={choice.isCorrect ? 'Imagen correcta' : 'Opción'}
+                  className={`relative bg-white rounded-[2rem] overflow-hidden shadow-2xl border-4 transition-all active:scale-95 min-h-[64px] focus:outline-none focus:ring-4 focus:ring-cyan-200 ${
                     isWrong
                       ? 'border-gray-300 opacity-40 scale-95'
                       : showHint
@@ -328,7 +346,16 @@ const WordLearning: React.FC<Props> = ({ user, onBack, onComplete }) => {
                   style={{ width: '45%', maxWidth: '280px' }}
                 >
                   <div className="w-full aspect-square overflow-hidden bg-gray-100">
-                    <img src={choice.imageUrl} alt="" className="w-full h-full object-cover" />
+                    <img
+                      src={choice.imageUrl}
+                      alt=""
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = 'none';
+                        (e.target as HTMLImageElement).parentElement!.classList.add('flex', 'items-center', 'justify-center');
+                        (e.target as HTMLImageElement).parentElement!.innerHTML = '<span class="text-6xl">🖼️</span>';
+                      }}
+                    />
                   </div>
                   {showHint && (
                     <div className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-yellow-400 px-4 py-1 rounded-full text-xs font-bold text-yellow-900 shadow-lg whitespace-nowrap">
@@ -367,7 +394,7 @@ const WordLearning: React.FC<Props> = ({ user, onBack, onComplete }) => {
     return (
       <div className="fixed inset-0 bg-indigo-950 z-[100] flex flex-col p-4 sm:p-6 overflow-y-auto">
         <header className="relative z-10 flex justify-between items-center mb-4 shrink-0">
-          <button onClick={handleBack} className="bg-white/10 p-3 rounded-2xl border-2 border-white/20 text-2xl hover:bg-white/30 transition-all active:scale-90 shadow-lg">🏠</button>
+          <button onClick={handleBack} aria-label="Volver" className="bg-white/10 p-3 rounded-2xl border-2 border-white/20 text-2xl hover:bg-white/30 transition-all active:scale-90 shadow-lg focus:outline-none focus:ring-4 focus:ring-cyan-200 min-h-[64px] flex items-center justify-center">🏠</button>
           <div className="bg-white/10 px-6 py-2 rounded-full border-2 border-cyan-400 backdrop-blur-md">
             <h2 className="text-sm sm:text-lg font-magic text-white uppercase tracking-tighter">Elegir la palabra</h2>
           </div>
@@ -399,7 +426,8 @@ const WordLearning: React.FC<Props> = ({ user, onBack, onComplete }) => {
                 <button
                   key={choice.id}
                   onClick={() => handleRecognizePick(choice.id, choice.isCorrect)}
-                  className={`relative bg-white rounded-[2rem] shadow-2xl border-4 transition-all active:scale-95 flex items-center justify-center p-6 sm:p-8 ${
+                  aria-label={`Palabra ${choice.word}`}
+                  className={`relative bg-white rounded-[2rem] shadow-2xl border-4 transition-all active:scale-95 flex items-center justify-center p-6 sm:p-8 focus:outline-none focus:ring-4 focus:ring-cyan-200 ${
                     isWrong
                       ? 'border-gray-300 opacity-40 scale-95'
                       : showHint
@@ -455,7 +483,8 @@ const WordLearning: React.FC<Props> = ({ user, onBack, onComplete }) => {
 
           <button
             onClick={handleCelebrateContinue}
-            className="w-full bg-indigo-600 text-white py-5 rounded-[2rem] text-2xl font-magic shadow-2xl hover:bg-indigo-700 border-b-[6px] border-indigo-800 transition-all active:translate-y-1 uppercase tracking-widest"
+            aria-label="Continuar"
+            className="w-full bg-indigo-600 text-white py-5 rounded-[2rem] text-2xl font-magic shadow-2xl hover:bg-indigo-700 border-b-[6px] border-indigo-800 transition-all active:translate-y-1 uppercase tracking-widest min-h-[64px] focus:outline-none focus:ring-4 focus:ring-indigo-200"
           >
             CONTINUAR
           </button>

@@ -35,3 +35,105 @@ body {
 * {
   -webkit-tap-highlight-color: transparent;
 }
+
+/* ====== High Contrast Mode ====== */
+[data-high-contrast="true"] {
+  --hc-bg: #000000;
+  --hc-text: #ffffff;
+  --hc-border: #ffffff;
+  --hc-accent: #ffff00;
+  --hc-focus: #00ffff;
+}
+
+[data-high-contrast="true"] * {
+  border-color: var(--hc-border) !important;
+}
+
+[data-high-contrast="true"] .bg-white\/90,
+[data-high-contrast="true"] .bg-white\/80,
+[data-high-contrast="true"] .bg-white\/50,
+[data-high-contrast="true"] .bg-white\/40,
+[data-high-contrast="true"] .bg-white\/10 {
+  background-color: #000000 !important;
+}
+
+[data-high-contrast="true"] .text-indigo-800,
+[data-high-contrast="true"] .text-indigo-700,
+[data-high-contrast="true"] .text-indigo-600,
+[data-high-contrast="true"] .text-blue-600,
+[data-high-contrast="true"] .text-blue-500,
+[data-high-contrast="true"] .text-cyan-600,
+[data-high-contrast="true"] .text-cyan-700,
+[data-high-contrast="true"] .text-gray-500,
+[data-high-contrast="true"] .text-gray-400,
+[data-high-contrast="true"] .text-orange-600,
+[data-high-contrast="true"] .text-orange-700,
+[data-high-contrast="true"] .text-yellow-700,
+[data-high-contrast="true"] .text-yellow-600,
+[data-high-contrast="true"] .text-pink-500,
+[data-high-contrast="true"] .text-red-500 {
+  color: #ffffff !important;
+}
+
+[data-high-contrast="true"] .text-white {
+  color: #ffff00 !important;
+}
+
+[data-high-contrast="true"] .bg-cyan-500,
+[data-high-contrast="true"] .bg-indigo-500,
+[data-high-contrast="true"] .bg-indigo-600,
+[data-high-contrast="true"] .bg-pink-500,
+[data-high-contrast="true"] .bg-blue-500,
+[data-high-contrast="true"] .bg-green-500,
+[data-high-contrast="true"] .bg-yellow-400,
+[data-high-contrast="true"] .bg-orange-500,
+[data-high-contrast="true"] .bg-red-500 {
+  background-color: #000080 !important;
+  color: #ffff00 !important;
+}
+
+[data-high-contrast="true"] button:focus-visible,
+[data-high-contrast="true"] [role="button"]:focus-visible {
+  outline: 4px solid #00ffff !important;
+  outline-offset: 2px !important;
+}
+
+/* ====== Reduced Motion Mode ====== */
+[data-reduce-motion="true"] .floating-gumi,
+[data-reduce-motion="true"] .animate-bounce-in,
+[data-reduce-motion="true"] .animate-fade-in,
+[data-reduce-motion="true"] .animate-pulse,
+[data-reduce-motion="true"] .animate-bounce {
+  animation: none !important;
+}
+
+[data-reduce-motion="true"] .floating-gumi {
+  transform: none !important;
+}
+
+[data-reduce-motion="true"] * {
+  transition-duration: 0.01ms !important;
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+}
+
+/* Also respect OS-level prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  .floating-gumi,
+  .animate-bounce-in,
+  .animate-fade-in,
+  .animate-pulse,
+  .animate-bounce {
+    animation: none !important;
+  }
+
+  .floating-gumi {
+    transform: none !important;
+  }
+
+  * {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}

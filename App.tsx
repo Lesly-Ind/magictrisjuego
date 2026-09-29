@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { User, Section } from './types';
+import { User, Section, AudioSettings, DEFAULT_AUDIO_SETTINGS } from './types';
 import PreLogin from './components/PreLogin';
 import Auth from './components/Auth';
 import Hub from './components/Hub';
@@ -14,13 +14,19 @@ import MediaGenerator from './components/MediaGenerator';
 import WordLearning from './components/WordLearning';
 import { MAGIC_PATH } from './services/mockData';
 import { supabase, isSupabaseReady } from './services/supabaseClient';
-import { loadAudioSettings } from './services/audioSettings';
+import { loadAudioSettings, subscribeToAudioSettings } from './services/audioSettings';
 
 const App: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
   const [section, setSection] = useState<Section | 'chat' | 'voice' | 'generator'>('pre-login');
   const [selectedCardIndex, setSelectedCardIndex] = useState<number | null>(null);
   const [initializing, setInitializing] = useState(true);
+  const [audioSettings, setAudioSettingsState] = useState<AudioSettings>({ ...DEFAULT_AUDIO_SETTINGS });
+
+  useEffect(() => {
+    const unsub = subscribeToAudioSettings((s) => setAudioSettingsState(s));
+    return unsub;
+  }, []);
 
   const getDaysDiff = (date1: Date, date2: Date) => {
     const d1 = new Date(date1.getFullYear(), date1.getMonth(), date1.getDate());
@@ -170,7 +176,15 @@ const App: React.FC = () => {
     }
   };
 
-  return <div className="min-h-screen pb-10">{renderSection()}</div>;
+  return (
+    <div
+      className="min-h-screen pb-10"
+      data-high-contrast={audioSettings.highContrast ? 'true' : 'false'}
+      data-reduce-motion={audioSettings.reduceMotion ? 'true' : 'false'}
+    >
+      {renderSection()}
+    </div>
+  );
 };
 
 export default App;

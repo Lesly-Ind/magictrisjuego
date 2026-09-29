@@ -60,6 +60,8 @@ export async function loadAudioSettings(userId: string): Promise<AudioSettings> 
         voiceVolume: data.voice_volume,
         voiceSpeed: data.voice_speed as VoiceSpeed,
         effectsVolume: data.effects_volume as EffectsVolume,
+        highContrast: data.high_contrast ?? false,
+        reduceMotion: data.reduce_motion ?? false,
       };
     }
   } catch {
@@ -93,6 +95,8 @@ export async function saveAudioSettings(userId: string, settings: AudioSettings)
         voice_volume: settings.voiceVolume,
         voice_speed: settings.voiceSpeed,
         effects_volume: settings.effectsVolume,
+        high_contrast: settings.highContrast,
+        reduce_motion: settings.reduceMotion,
         updated_at: new Date().toISOString(),
       }, { onConflict: 'user_id' });
   } catch (err) {

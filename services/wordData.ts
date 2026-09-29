@@ -6,11 +6,27 @@ const AGUA_IMG = 'https://images.pexels.com/photos/9000378/pexels-photo-9000378.
 const CASA_IMG = 'https://images.pexels.com/photos/13645517/pexels-photo-13645517.jpeg?auto=compress&cs=tinysrgb&h=650&w=940';
 const NINO_IMG = 'https://images.pexels.com/photos/29790577/pexels-photo-29790577.jpeg?auto=compress&cs=tinysrgb&h=650&w=940';
 
+export const WORD_CATEGORIES = [
+  'personas',
+  'familia',
+  'alimentos',
+  'animales',
+  'objetos_casa',
+  'cuerpo',
+  'ropa',
+  'lugares',
+  'acciones',
+] as const;
+
 export const FIRST_WORDS: WordItem[] = [
   {
     id: 'word-mama',
     word: 'Mamá',
     imageUrl: MAMA_IMG,
+    altText: 'Fotografía de una mamá abrazando a su hijo',
+    category: 'familia',
+    isPhotoReal: true,
+    imageCredit: 'Pexels',
     audioInstruction: 'Esta es mamá. Mamá.',
     celebrationPhrase: '¡Muy bien! Aprendiste MAMÁ.',
   },
@@ -18,6 +34,10 @@ export const FIRST_WORDS: WordItem[] = [
     id: 'word-papa',
     word: 'Papá',
     imageUrl: PAPA_IMG,
+    altText: 'Fotografía de un papá con su hijo',
+    category: 'familia',
+    isPhotoReal: true,
+    imageCredit: 'Pexels',
     audioInstruction: 'Este es papá. Papá.',
     celebrationPhrase: '¡Muy bien! Aprendiste PAPÁ.',
   },
@@ -25,6 +45,10 @@ export const FIRST_WORDS: WordItem[] = [
     id: 'word-mi-nombre',
     word: '',
     imageUrl: NINO_IMG,
+    altText: '',
+    category: 'personas',
+    isPhotoReal: true,
+    imageCredit: 'Pexels',
     audioInstruction: '',
     celebrationPhrase: '',
     isDynamic: true,
@@ -33,6 +57,10 @@ export const FIRST_WORDS: WordItem[] = [
     id: 'word-agua',
     word: 'Agua',
     imageUrl: AGUA_IMG,
+    altText: 'Vaso con agua',
+    category: 'alimentos',
+    isPhotoReal: true,
+    imageCredit: 'Pexels',
     audioInstruction: 'Esto es agua. Agua.',
     celebrationPhrase: '¡Muy bien! Aprendiste AGUA.',
   },
@@ -40,6 +68,10 @@ export const FIRST_WORDS: WordItem[] = [
     id: 'word-casa',
     word: 'Casa',
     imageUrl: CASA_IMG,
+    altText: 'Una casa con puerta y ventanas',
+    category: 'lugares',
+    isPhotoReal: true,
+    imageCredit: 'Pexels',
     audioInstruction: 'Esta es una casa. Casa.',
     celebrationPhrase: '¡Muy bien! Aprendiste CASA.',
   },
@@ -52,6 +84,7 @@ export function resolveWordItem(item: WordItem, nickname: string): WordItem {
   return {
     ...item,
     word: upper,
+    altText: `Fotografía de ${name}`,
     audioInstruction: `Este es tu nombre. ${name}.`,
     celebrationPhrase: `¡Muy bien! Aprendiste ${upper}.`,
   };
@@ -78,3 +111,11 @@ export function getDistractorWords(correctId: string, correctWord: string, count
   const shuffled = [...all].sort(() => Math.random() - 0.5);
   return shuffled.slice(0, count).map(w => w.word);
 }
+
+/** Returns the effective image URL with priority: customImageUrl > imageUrl > fallback */
+export function getEffectiveImageUrl(item: WordItem): string {
+  return item.customImageUrl || item.imageUrl;
+}
+
+/** Fallback emoji image for when a photo fails to load */
+export const FALLBACK_IMAGE_EMOJI = '🖼️';
