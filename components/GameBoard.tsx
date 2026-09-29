@@ -145,8 +145,8 @@ const GameBoard: React.FC<Props> = ({ user, card, onComplete, onBack }) => {
     return <span className={`font-magic uppercase tracking-tight text-indigo-900 whitespace-nowrap ${wordSizeClass}`}>{word}</span>;
   };
 
-  const bubbleClass = "relative w-32 h-32 sm:w-44 md:w-56 sm:h-44 md:h-56 rounded-full bg-indigo-800/60 border-[6px] sm:border-[8px] border-white/40 shadow-2xl flex flex-col items-center justify-center transition-all transform hover:scale-105 active:scale-95 overflow-visible p-3 sm:p-4";
-  const letterCardClass = "relative w-28 h-40 sm:w-36 md:w-48 sm:h-52 md:h-64 rounded-[2rem] sm:rounded-[2.5rem] bg-white border-[6px] sm:border-[10px] border-indigo-200 flex items-center justify-center shadow-2xl transition-all transform hover:scale-105 active:scale-95 text-center overflow-visible p-2 sm:p-3";
+  const bubbleClass = "relative w-32 h-32 sm:w-44 md:w-56 sm:h-44 md:h-56 rounded-full bg-indigo-800/60 border-[6px] sm:border-[8px] border-white/40 shadow-2xl flex flex-col items-center justify-center transition-all transform hover:scale-105 active:scale-95 overflow-visible p-3 sm:p-4 focus:outline-none focus:ring-4 focus:ring-cyan-200";
+  const letterCardClass = "relative w-28 h-40 sm:w-36 md:w-48 sm:h-52 md:h-64 rounded-[2rem] sm:rounded-[2.5rem] bg-white border-[6px] sm:border-[10px] border-indigo-200 flex items-center justify-center shadow-2xl transition-all transform hover:scale-105 active:scale-95 text-center overflow-visible p-2 sm:p-3 focus:outline-none focus:ring-4 focus:ring-cyan-200";
 
   return (
     <div className="fixed inset-0 bg-indigo-950 z-[100] flex flex-col p-3 sm:p-6 overflow-y-auto">
@@ -157,7 +157,7 @@ const GameBoard: React.FC<Props> = ({ user, card, onComplete, onBack }) => {
       </div>
 
       <header className="relative z-10 flex justify-between items-center mb-4 sm:mb-6 shrink-0">
-        <button onClick={handleBack} className="bg-white/10 p-3 sm:p-4 rounded-[1.5rem] sm:rounded-[2rem] border-2 sm:border-4 border-white/20 text-2xl sm:text-3xl hover:bg-white/30 transition-all active:scale-90 shadow-lg">🏠</button>
+        <button onClick={handleBack} aria-label="Volver" className="bg-white/10 p-3 sm:p-4 rounded-[1.5rem] sm:rounded-[2rem] border-2 sm:border-4 border-white/20 text-2xl sm:text-3xl hover:bg-white/30 transition-all active:scale-90 shadow-lg focus:outline-none focus:ring-4 focus:ring-cyan-200 min-h-[64px] flex items-center justify-center">🏠</button>
         <div className="bg-white/10 px-4 sm:px-12 py-2 sm:py-3 rounded-full border-2 sm:border-4 border-cyan-400 shadow-[0_0_30px_rgba(34,211,238,0.4)] backdrop-blur-md">
             <h2 className="text-sm sm:text-xl md:text-3xl font-magic text-white uppercase tracking-tighter">Aprendiendo: {card.value}</h2>
         </div>
@@ -185,9 +185,10 @@ const GameBoard: React.FC<Props> = ({ user, card, onComplete, onBack }) => {
                     <p className="text-xl sm:text-4xl font-bold text-cyan-300 uppercase tracking-widest leading-tight">{card.description}</p>
                     <div className="flex flex-col gap-3 sm:gap-4">
                         <VoiceButton text={card.audioInstruction} size="large" autoPlay className="py-3 sm:py-4 bg-indigo-500 rounded-full border-b-[6px] sm:border-b-[8px] border-indigo-800" />
-                        <button 
+                        <button
                             onClick={handleStartGame}
-                            className="bg-pink-500 text-white py-4 sm:py-6 rounded-[2rem] sm:rounded-[2.5rem] text-2xl sm:text-3xl font-magic shadow-2xl hover:bg-pink-600 border-b-[6px] sm:border-b-[8px] border-pink-800 transition-all active:translate-y-1 uppercase tracking-widest"
+                            aria-label="Empezar a jugar"
+                            className="bg-pink-500 text-white py-4 sm:py-6 rounded-[2rem] sm:rounded-[2.5rem] text-2xl sm:text-3xl font-magic shadow-2xl hover:bg-pink-600 border-b-[6px] sm:border-b-[8px] border-pink-800 transition-all active:translate-y-1 uppercase tracking-widest min-h-[64px] focus:outline-none focus:ring-4 focus:ring-pink-200"
                         >
                             JUGAR
                         </button>
@@ -212,14 +213,15 @@ const GameBoard: React.FC<Props> = ({ user, card, onComplete, onBack }) => {
                     const isWrong = wrongPick === emoji;
                     const showHint = hintActive && emoji === card.icon;
                     return (
-                      <button 
-                        key={idx} 
-                        onClick={emoji === card.icon ? handleCorrectIdentify : () => handleGentleError(emoji)} 
+                      <button
+                        key={idx}
+                        onClick={emoji === card.icon ? handleCorrectIdentify : () => handleGentleError(emoji)}
+                        aria-label={`Opción con pictograma`}
                         className={`${bubbleClass} ${
                           isWrong ? 'opacity-40 scale-95' : showHint ? 'ring-4 ring-yellow-400 animate-pulse scale-105' : ''
                         }`}
                       >
-                        <span className="text-5xl sm:text-9xl leading-none">{emoji}</span>
+                        <span className="text-5xl sm:text-9xl leading-none" aria-hidden="true">{emoji}</span>
                         {showHint && <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-yellow-400 px-3 py-0.5 rounded-full text-xs font-bold text-yellow-900 shadow-lg whitespace-nowrap">¡Aquí!</span>}
                       </button>
                     );
@@ -250,11 +252,12 @@ const GameBoard: React.FC<Props> = ({ user, card, onComplete, onBack }) => {
                         <button
                             key={idx}
                             onClick={choice === card.value ? handleCorrectFindLetter : () => handleGentleError(choice)}
+                            aria-label={`Opción ${choice}`}
                             className={`${letterCardClass} ${
                               isWrong ? 'opacity-40 scale-95' : showHint ? 'ring-4 ring-yellow-400 animate-pulse scale-105' : ''
                             }`}
                         >
-                            <span className={`font-magic leading-none text-center block text-black tracking-tighter ${choice.length > 2 ? 'text-[50px] sm:text-[90px]' : 'text-[70px] sm:text-[130px]'}`}>
+                            <span className={`font-magic leading-none text-center block text-black tracking-tighter ${choice.length > 2 ? 'text-[50px] sm:text-[90px]' : 'text-[70px] sm:text-[130px]'}`} aria-hidden="true">
                                 {choice}
                             </span>
                             {showHint && <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-yellow-400 px-3 py-0.5 rounded-full text-xs font-bold text-yellow-900 shadow-lg whitespace-nowrap">¡Aquí!</span>}
@@ -278,9 +281,10 @@ const GameBoard: React.FC<Props> = ({ user, card, onComplete, onBack }) => {
                 <h3 className="text-4xl sm:text-7xl font-magic text-white drop-shadow-lg tracking-tighter uppercase">EXCELENTE</h3>
                 <p className="text-lg sm:text-2xl font-bold text-white uppercase tracking-[0.2em] opacity-90">¡Has completado esta letra!</p>
              </div>
-             <button 
+             <button
                 onClick={handleComplete}
-                className="bg-white text-orange-600 py-4 sm:py-6 px-10 sm:px-16 rounded-full text-2xl sm:text-3xl font-magic shadow-2xl hover:scale-110 active:scale-95 transition-all border-b-[6px] sm:border-b-[8px] border-orange-200 uppercase tracking-widest"
+                aria-label="Siguiente letra"
+                className="bg-white text-orange-600 py-4 sm:py-6 px-10 sm:px-16 rounded-full text-2xl sm:text-3xl font-magic shadow-2xl hover:scale-110 active:scale-95 transition-all border-b-[6px] sm:border-b-[8px] border-orange-200 uppercase tracking-widest min-h-[64px] focus:outline-none focus:ring-4 focus:ring-orange-200"
              >
                 SIGUIENTE
              </button>

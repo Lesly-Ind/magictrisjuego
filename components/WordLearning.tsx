@@ -295,6 +295,16 @@ const WordLearning: React.FC<Props> = ({ user, onBack, onComplete }) => {
               <GumiGuide message="¡Mira y escucha! Esta es tu palabra." size="small" autoSpeak />
             </div>
 
+            {currentWord.signLanguageUrl && (
+              <button
+                onClick={() => window.open(currentWord.signLanguageUrl, '_blank')}
+                aria-label="Ver seña en lengua de señas"
+                className="w-full bg-emerald-500 text-white py-4 rounded-[2rem] text-xl font-magic shadow-xl hover:bg-emerald-600 border-b-[4px] border-emerald-800 transition-all active:translate-y-1 uppercase tracking-widest min-h-[64px] focus:outline-none focus:ring-4 focus:ring-emerald-200 flex items-center justify-center gap-3"
+              >
+                <span aria-hidden="true">🤟</span> Ver seña
+              </button>
+            )}
+
             <button
               onClick={handleStartRelate}
               aria-label="Siguiente actividad"
