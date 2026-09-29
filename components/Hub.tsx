@@ -8,9 +8,11 @@ interface Props {
   user: User;
   setSection: (s: Section) => void;
   onSelectCard: (index: number) => void;
+  onStartWordsWithGreeting: () => void;
+  onStartPlayWithGreeting: (index: number) => void;
 }
 
-const Hub: React.FC<Props> = ({ user, setSection, onSelectCard }) => {
+const Hub: React.FC<Props> = ({ user, setSection, onSelectCard, onStartWordsWithGreeting, onStartPlayWithGreeting }) => {
   let globalCardIndex = 0;
 
   const handleSectionChange = (s: Section) => {
@@ -20,7 +22,7 @@ const Hub: React.FC<Props> = ({ user, setSection, onSelectCard }) => {
 
   const handleCardSelect = (index: number) => {
     playPopSound();
-    onSelectCard(index);
+    onStartPlayWithGreeting(index);
   };
 
   const getStreakData = (s: number) => {
@@ -79,10 +81,11 @@ const Hub: React.FC<Props> = ({ user, setSection, onSelectCard }) => {
 
             {/* BOTÓN ÁLBUM */}
             <button 
-                onClick={() => handleSectionChange('printable')}
-                className="bg-white text-indigo-700 hover:bg-blue-50 px-2 py-1.5 sm:px-5 sm:py-3 rounded-xl sm:rounded-2xl border-2 border-indigo-200 text-[8px] sm:text-xs font-magic uppercase tracking-widest transition-all shadow-xl active:scale-95 flex items-center gap-1 sm:gap-2 font-bold"
+                onClick={() => handleSectionChange('album')}
+                aria-label="Ver mi álbum de premios"
+                className="bg-white text-indigo-700 hover:bg-blue-50 px-2 py-1.5 sm:px-5 sm:py-3 rounded-xl sm:rounded-2xl border-2 border-indigo-200 text-[8px] sm:text-xs font-magic uppercase tracking-widest transition-all shadow-xl active:scale-95 flex items-center gap-1 sm:gap-2 font-bold min-h-[44px] focus:outline-none focus:ring-4 focus:ring-indigo-200"
             >
-                <span className="hidden sm:inline">🎴</span> Álbum
+                <span className="hidden sm:inline" aria-hidden="true">🏆</span> Mi Álbum
             </button>
 
             {/* PERFIL */}
@@ -97,8 +100,9 @@ const Hub: React.FC<Props> = ({ user, setSection, onSelectCard }) => {
         {/* SECCIÓN: MIS PRIMERAS PALABRAS */}
         <div className="mb-12 sm:mb-16">
           <button
-            onClick={() => handleSectionChange('words')}
-            className="w-full bg-gradient-to-r from-pink-500 via-rose-500 to-orange-400 rounded-[2.5rem] p-5 sm:p-7 shadow-2xl border-4 border-white/40 flex items-center gap-4 sm:gap-6 transition-all hover:scale-[1.02] active:scale-95 group"
+            onClick={() => onStartWordsWithGreeting()}
+            aria-label="Empezar Mis Primeras Palabras"
+            className="w-full bg-gradient-to-r from-pink-500 via-rose-500 to-orange-400 rounded-[2.5rem] p-5 sm:p-7 shadow-2xl border-4 border-white/40 flex items-center gap-4 sm:gap-6 transition-all hover:scale-[1.02] active:scale-95 group min-h-[64px] focus:outline-none focus:ring-4 focus:ring-pink-200"
           >
             <div className="text-5xl sm:text-7xl floating-gumi select-none shrink-0">👾</div>
             <div className="flex-1 text-left">

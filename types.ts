@@ -1,5 +1,5 @@
 
-export type Section = 'pre-login' | 'login' | 'register' | 'hub' | 'play' | 'profile' | 'info' | 'printable' | 'words';
+export type Section = 'pre-login' | 'login' | 'register' | 'hub' | 'play' | 'profile' | 'info' | 'printable' | 'words' | 'album';
 
 export interface User {
   id: string;

@@ -12,9 +12,19 @@ import ChatBuddy from './components/ChatBuddy';
 import VoiceLive from './components/VoiceLive';
 import MediaGenerator from './components/MediaGenerator';
 import WordLearning from './components/WordLearning';
+import Greeting from './components/Greeting';
+import BreakReminder from './components/BreakReminder';
+import Album from './components/Album';
 import { MAGIC_PATH } from './services/mockData';
 import { supabase, isSupabaseReady } from './services/supabaseClient';
 import { loadAudioSettings, subscribeToAudioSettings } from './services/audioSettings';
+import { useSession } from './services/useSession';
+import { earnReward } from './services/rewardService';
+
+const GUEST_USER: User = {
+  id: 'guest', username: '', email: '', nickname: 'Invitado',
+  avatar: '🌈', score: 0, streak: 0, lastLogin: '', progressIndex: 0,
+};
 
 const App: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -22,6 +32,8 @@ const App: React.FC = () => {
   const [selectedCardIndex, setSelectedCardIndex] = useState<number | null>(null);
   const [initializing, setInitializing] = useState(true);
   const [audioSettings, setAudioSettingsState] = useState<AudioSettings>({ ...DEFAULT_AUDIO_SETTINGS });
+  const [greetingActive, setGreetingActive] = useState(false);
+  const session = useSession(user || GUEST_USER);
 
   useEffect(() => {
     const unsub = subscribeToAudioSettings((s) => setAudioSettingsState(s));
@@ -39,9 +51,7 @@ const App: React.FC = () => {
     const lastDate = new Date(lastLoginStr);
     const today = new Date();
     const diff = getDaysDiff(lastDate, today);
-    
-    // Si ha pasado más de un día sin jugar, la racha se rompe (vuelve a 0)
-    // Pero si juega hoy, la racha se mantendrá o subirá en handleGameComplete
+
     let currentStreak = Number(profile.streak) || 0;
     if (diff > 1) currentStreak = 0;
 
@@ -71,7 +81,6 @@ const App: React.FC = () => {
       }
 
       if (isSupabaseReady()) {
-        // Fix: Using cast to bypass potential type mismatches in Supabase library versions
         const { data: { session } } = await (supabase!.auth as any).getSession();
         if (session?.user) {
           const { data: profile } = await supabase!
@@ -88,7 +97,6 @@ const App: React.FC = () => {
         }
       }
 
-      // Load audio preferences for the resolved user (or guest)
       const userIdForAudio = resolvedUser?.id || 'guest';
       await loadAudioSettings(userIdForAudio);
       } catch (err) {
@@ -105,14 +113,8 @@ const App: React.FC = () => {
     const today = new Date();
     const lastDate = new Date(user.lastLogin);
     const diff = getDaysDiff(lastDate, today);
-    
+
     let newStreak = user.streak;
-    
-    // Lógica de racha:
-    // Si es su primera vez o la racha estaba en 0, empieza en 1.
-    // Si jugó ayer (diff === 1), aumenta la racha.
-    // Si ya jugó hoy (diff === 0), la racha se mantiene igual.
-    // Si pasó más de un día (diff > 1), se reinicia a 1 porque acaba de completar un juego.
     if (user.streak === 0 || diff > 1) {
       newStreak = 1;
     } else if (diff === 1) {
@@ -128,9 +130,8 @@ const App: React.FC = () => {
     };
     setUser(updatedUser);
     localStorage.setItem('magic_user', JSON.stringify(updatedUser));
-    
+
     if (isSupabaseReady() && user.id !== 'guest') {
-      console.log("Actualizando racha en Supabase:", newStreak);
       await supabase!.from('profiles').update({
         score: updatedUser.score,
         streak: updatedUser.streak,
@@ -140,6 +141,21 @@ const App: React.FC = () => {
     }
     setSelectedCardIndex(null);
     setSection('hub');
+    session.recordActivity();
+    earnReward(user.id, 'butterfly');
+  };
+
+  const handleWordsComplete = (scoreGain: number) => {
+    if (!user) return;
+    const updatedUser = { ...user, score: user.score + scoreGain };
+    setUser(updatedUser);
+    localStorage.setItem('magic_user', JSON.stringify(updatedUser));
+    if (isSupabaseReady() && user.id !== 'guest') {
+      supabase!.from('profiles').update({ score: updatedUser.score }).eq('id', user.id);
+    }
+    session.recordActivity();
+    earnReward(user.id, 'star_first');
+    earnReward(user.id, 'flower');
   };
 
   if (initializing) return (
@@ -149,6 +165,32 @@ const App: React.FC = () => {
     </div>
   );
 
+  const handleStartWordsWithGreeting = () => {
+    setSection('words');
+    setGreetingActive(true);
+  };
+
+  const handleStartPlayWithGreeting = (index: number) => {
+    setSelectedCardIndex(index);
+    setGreetingActive(true);
+  };
+
+  const handleGreetingStart = () => {
+    setGreetingActive(false);
+    session.startSession();
+  };
+
+  const handleBreakContinue = () => {
+    session.dismissBreak();
+  };
+
+  const handleBreakEnd = () => {
+    session.endCurrentSession();
+    session.dismissBreak();
+    setSelectedCardIndex(null);
+    setSection('hub');
+  };
+
   const renderSection = () => {
     if (selectedCardIndex !== null && user) {
         return <GameBoard user={user} card={MAGIC_PATH[selectedCardIndex]} onComplete={handleGameComplete} onBack={() => setSelectedCardIndex(null)} />;
@@ -157,18 +199,12 @@ const App: React.FC = () => {
       case 'pre-login': return <PreLogin onStart={() => setSection('login')} />;
       case 'login': return <Auth mode="login" onAuthSuccess={(u) => { setUser(u); loadAudioSettings(u.id); setSection('hub'); }} toggleMode={() => setSection('register')} />;
       case 'register': return <Auth mode="register" onAuthSuccess={(u) => { setUser(u); loadAudioSettings(u.id); setSection('hub'); }} toggleMode={() => setSection('login')} />;
-      case 'hub': return user ? <Hub user={user} setSection={setSection as any} onSelectCard={setSelectedCardIndex} /> : null;
-      case 'profile': return user ? <Profile user={user} onBack={() => setSection('hub')} onLogout={() => { setUser(null); localStorage.removeItem('magic_user'); loadAudioSettings('guest'); setSection('pre-login'); }} onUpdate={(upd) => setUser({...user, ...upd})} /> : null;
+      case 'hub': return user ? <Hub user={user} setSection={setSection as any} onSelectCard={setSelectedCardIndex} onStartWordsWithGreeting={handleStartWordsWithGreeting} onStartPlayWithGreeting={handleStartPlayWithGreeting} /> : null;
+      case 'profile': return user ? <Profile user={user} onBack={() => setSection('hub')} onLogout={() => { setUser(null); localStorage.removeItem('magic_user'); loadAudioSettings('guest'); setSection('pre-login'); }} onUpdate={(upd) => setUser({...user, ...upd})} onOpenAlbum={() => setSection('album')} /> : null;
       case 'info': return <Info onBack={() => setSection('hub')} />;
       case 'printable': return <PrintableCards onBack={() => setSection('hub')} />;
-      case 'words': return user ? <WordLearning user={user} onBack={() => setSection('hub')} onComplete={(scoreGain) => {
-        const updatedUser = { ...user, score: user.score + scoreGain };
-        setUser(updatedUser);
-        localStorage.setItem('magic_user', JSON.stringify(updatedUser));
-        if (isSupabaseReady() && user.id !== 'guest') {
-          supabase!.from('profiles').update({ score: updatedUser.score }).eq('id', user.id);
-        }
-      }} /> : null;
+      case 'album': return user ? <Album user={user} onBack={() => setSection('hub')} /> : null;
+      case 'words': return user ? <WordLearning user={user} onBack={() => setSection('hub')} onComplete={handleWordsComplete} /> : null;
       case 'chat': return <div className="p-4 pt-20 max-w-2xl mx-auto"><button onClick={() => setSection('hub')} className="mb-4 text-white bg-indigo-600 px-6 py-2 rounded-full font-magic uppercase">Volver</button><ChatBuddy /></div>;
       case 'voice': return <div className="p-4 pt-20 max-w-2xl mx-auto"><button onClick={() => setSection('hub')} className="mb-4 text-white bg-indigo-600 px-6 py-2 rounded-full font-magic uppercase">Volver</button><VoiceLive /></div>;
       case 'generator': return <div className="p-4 pt-20 max-w-2xl mx-auto"><button onClick={() => setSection('hub')} className="mb-4 text-white bg-indigo-600 px-6 py-2 rounded-full font-magic uppercase">Volver</button><MediaGenerator /></div>;
@@ -176,13 +212,30 @@ const App: React.FC = () => {
     }
   };
 
+  const showGreeting = greetingActive && user;
+
   return (
     <div
       className="min-h-screen pb-10"
       data-high-contrast={audioSettings.highContrast ? 'true' : 'false'}
       data-reduce-motion={audioSettings.reduceMotion ? 'true' : 'false'}
     >
-      {renderSection()}
+      {showGreeting ? (
+        <Greeting
+          user={user!}
+          onStart={handleGreetingStart}
+          onBack={() => { setGreetingActive(false); setSection('hub'); }}
+        />
+      ) : (
+        <>
+          {renderSection()}
+          <BreakReminder
+            breakLevel={session.breakLevel}
+            onContinue={handleBreakContinue}
+            onEndSession={handleBreakEnd}
+          />
+        </>
+      )}
     </div>
   );
 };

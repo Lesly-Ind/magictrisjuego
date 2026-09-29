@@ -6,6 +6,7 @@ import { playPopSound, playSuccessSound, stopCurrentVoice } from './AudioUtils';
 import { getRandomPraise, getRandomGentleGuide } from '../services/feedbackPhrases';
 import { textToSpeech } from '../services/gemini';
 import { decode, decodeAudioData, getSharedAudioContext, playVoiceBuffer } from './AudioUtils';
+import GumiGuide from './GumiGuide';
 import { MAGIC_PATH } from '../services/mockData';
 
 interface Props {
@@ -94,6 +95,13 @@ const GameBoard: React.FC<Props> = ({ user, card, onComplete, onBack }) => {
     speakText(getRandomGentleGuide());
   };
 
+  const handleHelp = () => {
+    stopCurrentVoice();
+    playPopSound();
+    speakText(getRandomGentleGuide());
+    setHintActive(true);
+  };
+
   const handleBack = () => {
     stopCurrentVoice();
     playPopSound();
@@ -161,7 +169,13 @@ const GameBoard: React.FC<Props> = ({ user, card, onComplete, onBack }) => {
         <div className="bg-white/10 px-4 sm:px-12 py-2 sm:py-3 rounded-full border-2 sm:border-4 border-cyan-400 shadow-[0_0_30px_rgba(34,211,238,0.4)] backdrop-blur-md">
             <h2 className="text-sm sm:text-xl md:text-3xl font-magic text-white uppercase tracking-tighter">Aprendiendo: {card.value}</h2>
         </div>
-        <div className="w-10 sm:w-16"></div>
+        <button 
+          onClick={handleHelp}
+          aria-label="Pedir ayuda a Gumi"
+          className="bg-yellow-400 text-white w-10 h-10 sm:w-14 sm:h-14 rounded-2xl shadow-lg border-2 border-white flex items-center justify-center transition-all hover:scale-110 active:scale-95 min-h-[44px] focus:outline-none focus:ring-4 focus:ring-yellow-200"
+        >
+          <span className="text-lg sm:text-2xl">👾</span>
+        </button>
       </header>
 
       <main className="relative z-10 flex-1 flex flex-col items-center justify-center max-w-5xl mx-auto w-full pb-8 sm:pb-10">
@@ -193,6 +207,7 @@ const GameBoard: React.FC<Props> = ({ user, card, onComplete, onBack }) => {
                             JUGAR
                         </button>
                     </div>
+                    <GumiGuide message="¡Vamos a jugar juntos!" size="small" autoSpeak />
                 </div>
             </div>
           </div>
@@ -281,6 +296,7 @@ const GameBoard: React.FC<Props> = ({ user, card, onComplete, onBack }) => {
                 <h3 className="text-4xl sm:text-7xl font-magic text-white drop-shadow-lg tracking-tighter uppercase">EXCELENTE</h3>
                 <p className="text-lg sm:text-2xl font-bold text-white uppercase tracking-[0.2em] opacity-90">¡Has completado esta letra!</p>
              </div>
+             <GumiGuide message="¡Lo lograste! ¡Eres increíble!" size="medium" autoSpeak />
              <button
                 onClick={handleComplete}
                 aria-label="Siguiente letra"

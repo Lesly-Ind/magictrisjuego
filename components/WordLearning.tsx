@@ -9,6 +9,7 @@ import {
 } from '../services/masteryService';
 import VoiceButton from './VoiceButton';
 import GumiGuide from './GumiGuide';
+import VisualAgenda, { AgendaStep } from './VisualAgenda';
 import { playPopSound, playSuccessSound, stopCurrentVoice } from './AudioUtils';
 import { getRandomPraise, getRandomGentleGuide } from '../services/feedbackPhrases';
 import { textToSpeech } from '../services/gemini';
@@ -31,6 +32,7 @@ const WordLearning: React.FC<Props> = ({ user, onBack, onComplete }) => {
   const [wrongPick, setWrongPick] = useState<string | null>(null);
   const [hintActive, setHintActive] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [helpActive, setHelpActive] = useState(false);
 
   const allWords = useMemo(() => getAllWordItems(user.nickname), [user.nickname]);
   const allWordIds = useMemo(() => allWords.map(w => w.id), [allWords]);
@@ -45,6 +47,14 @@ const WordLearning: React.FC<Props> = ({ user, onBack, onComplete }) => {
   useEffect(() => {
     loadProgress();
   }, [loadProgress]);
+
+  const handleHelp = () => {
+    stopCurrentVoice();
+    playPopSound();
+    speakText(getRandomGentleGuide());
+    setHelpActive(true);
+    setHintActive(true);
+  };
 
   const handleBack = () => {
     stopCurrentVoice();
@@ -192,6 +202,14 @@ const WordLearning: React.FC<Props> = ({ user, onBack, onComplete }) => {
     return (
       <div className="min-h-screen flex flex-col pt-20 pb-10 px-4 max-w-4xl mx-auto w-full">
         <button
+          onClick={handleHelp}
+          aria-label="Pedir ayuda a Gumi"
+          className="self-start mb-6 bg-yellow-400 text-white p-3 rounded-2xl shadow-lg border-2 border-white text-xl active:scale-90 transition-transform focus:outline-none focus:ring-4 focus:ring-yellow-200 min-h-[64px]"
+        >
+          👾
+        </button>
+
+        <button
           onClick={handleBack}
           aria-label="Volver al inicio"
           className="self-start mb-6 bg-white/80 backdrop-blur-md p-3 rounded-2xl shadow-lg border-2 border-blue-200 text-xl active:scale-90 transition-transform focus:outline-none focus:ring-4 focus:ring-blue-200 min-h-[64px]"
@@ -205,6 +223,10 @@ const WordLearning: React.FC<Props> = ({ user, onBack, onComplete }) => {
             size="medium"
             autoSpeak
           />
+        </div>
+
+        <div className="mb-8">
+          <VisualAgenda currentStep="learn" />
         </div>
 
         <h2 className="text-3xl sm:text-5xl font-magic text-white drop-shadow-lg text-center mb-8 uppercase tracking-tighter">

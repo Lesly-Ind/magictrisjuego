@@ -5,13 +5,19 @@ const PRAISE_PHRASES = [
   '¡Genial!',
   '¡Fantástico!',
   '¡Sigue así!',
+  '¡Qué bueno!',
+  '¡Increíble!',
 ];
 
 const GENTLE_GUIDE_PHRASES = [
   'Vamos a intentarlo juntos.',
   'Escucha otra vez.',
-  'Probemos de nuevo.',
+  'Probemos una vez más.',
   '¡Tú puedes! Intenta otra vez.',
+  'Yo te ayudo. Vamos otra vez.',
+  'No pasa nada. Probemos de nuevo.',
+  'Mira con atención. Tú puedes.',
+  'Tranquilo. Lo intentamos otra vez.',
 ];
 
 export function getRandomPraise(word?: string): string {

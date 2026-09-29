@@ -9,9 +9,10 @@ interface Props {
     onBack: () => void; 
     onLogout: () => void;
     onUpdate: (u: Partial<User>) => void;
+    onOpenAlbum: () => void;
 }
 
-const Profile: React.FC<Props> = ({ user, onBack, onLogout, onUpdate }) => {
+const Profile: React.FC<Props> = ({ user, onBack, onLogout, onUpdate, onOpenAlbum }) => {
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [tempNickname, setTempNickname] = useState(user.nickname);
   const avatars = ['🐧', '👾', '🤖', '🦋', '🦁', '⭐', '🐻‍❄️', '🐥'];
@@ -283,7 +284,17 @@ const Profile: React.FC<Props> = ({ user, onBack, onLogout, onUpdate }) => {
           </div>
 
           <button
-            className="w-full bg-red-50 text-red-500 py-4 rounded-full text-xl font-magic border-2 border-red-100 hover:bg-red-500 hover:text-white transition-all shadow-sm active:scale-95 uppercase tracking-tighter"
+            className="w-full bg-indigo-100 text-indigo-700 py-4 rounded-full text-xl font-magic border-2 border-indigo-200 hover:bg-indigo-200 transition-all active:scale-95 uppercase tracking-widest min-h-[64px] focus:outline-none focus:ring-4 focus:ring-indigo-200"
+            onClick={() => { playPopSound(); onOpenAlbum(); }}
+            aria-label="Ver mi álbum de premios"
+          >
+            🏆 Mi Álbum
+          </button>
+
+          <button
+            onClick={handleLogoutClick}
+            className="w-full bg-red-50 text-red-500 py-4 rounded-full text-xl font-magic border-2 border-red-100 hover:bg-red-500 hover:text-white transition-all shadow-sm active:scale-95 uppercase tracking-tighter min-h-[64px] focus:outline-none focus:ring-4 focus:ring-red-200"
+            aria-label="Cerrar sesión"
           >
             Cerrar Sesión
           </button>
